@@ -40,7 +40,9 @@ fastcgi_module_t::fastcgi_module_t(fastcgi::ComponentContext * context) :
     m_client(NULL)
 { }
 
-fastcgi_module_t::~fastcgi_module_t() { }
+fastcgi_module_t::~fastcgi_module_t() {
+    m_client.reset();
+}
 
 namespace {
     struct extract_argument {
@@ -123,11 +125,9 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
                 chunk->size()
             );
         }
-	}
-	catch (const fastcgi::HttpException &e) {
+	} catch (const fastcgi::HttpException &e) {
 		throw;
-	}
-	catch (...) {
+	} catch (...) {
 		throw fastcgi::HttpException(400);
 	}
 }
