@@ -65,7 +65,8 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
 	(void)context;
     
     try {
-        if(request->getRequestMethod() != "POST") {
+        if(request->getRequestMethod() != "GET") {
+            log()->error("Method '%s' is not supported", request->getRequestMethod().c_str())
             throw fastcgi::HttpException(400);
         }
 
@@ -86,6 +87,7 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
         );
 
         if(tokens.size() != 2) {
+            log()->error("Invalid number of cloud path tokens: %d", tokens.size());
             throw fastcgi::HttpException(400);
         }
 
