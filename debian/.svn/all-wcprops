@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/photo/!svn/ver/2565/trunk/proxy/ip-translate/debian
+END
+control
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/photo/!svn/ver/2211/trunk/proxy/ip-translate/debian/control
+END
+fastcgi-ip-translate.files
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/photo/!svn/ver/2211/trunk/proxy/ip-translate/debian/fastcgi-ip-translate.files
+END
+compat
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/photo/!svn/ver/2211/trunk/proxy/ip-translate/debian/compat
+END
+changelog
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/photo/!svn/ver/2565/trunk/proxy/ip-translate/debian/changelog
+END
+rules
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/photo/!svn/ver/2211/trunk/proxy/ip-translate/debian/rules
+END

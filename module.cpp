@@ -36,127 +36,145 @@ fastcgi_module_t::~fastcgi_module_t() {
     m_client.reset();
 }
 
-namespace {
-    typedef boost::tokenizer<
-        boost::char_separator<char>
-    > tokenizer_type;
+namespace msgpack {
+    template<class Stream>
+    inline packer<Stream>& operator << (packer<Stream>& packer, const fastcgi::Request& request) {
+        typedef std::vector<
+            std::string
+        > string_vector_t;
 
-    typedef std::map<
-        std::string,
-        std::vector<std::string>
-    > vector_map_t;
+        if(request.getRequestMethod() == "POST") {
+            packer.pack_map(9);
 
-    typedef std::map<
-        std::string,
-        std::string
-    > string_map_t;
-
-    struct request_wrapper_t {
-        typedef std::vector<std::string> string_vector_t;
-
-        request_wrapper_t(fastcgi::Request * request):
-            secure(request->isSecure()),
-            host(request->getHost()),
-            method(request->getRequestMethod()),
-            content_length(0)
-        {
-            string_vector_t argument_names;
+            std::string body;
+           
+            request.requestBody().toString(body);
             
-            request->argNames(argument_names);
+            packer.pack(std::string("body"));
+            packer.pack(body);
 
-            for(string_vector_t::const_iterator it = argument_names.begin();
-                it != argument_names.end();
-                ++it)
-            {
-                request->getArg(*it, query[*it]);
-            }
+            packer.pack(std::string("content-type"));
+            packer.pack(request.getContentType());
 
-            string_vector_t header_names;
-
-            request->headerNames(header_names);
-            
-            for(string_vector_t::const_iterator it = header_names.begin();
-                it != header_names.end();
-                ++it)
-            {
-                headers[*it] = request->getHeader(*it);
-            }
-
-            string_vector_t cookie_names;
-
-            request->cookieNames(cookie_names);
-            
-            for(string_vector_t::const_iterator it = cookie_names.begin();
-                it != cookie_names.end();
-                ++it)
-            {
-                cookies[*it] = request->getCookie(*it);
-            }
-
-            if(method == "POST") {
-                request->requestBody().toString(body);
-                content_type = request->getContentType();
-                content_length = request->getContentLength();
-            }
+            packer.pack(std::string("content-length"));
+            packer.pack(request.getContentLength());
+        } else {
+            packer.pack_map(6);
         }
 
-        bool secure;
-        std::string host;
-        std::string method;
+        packer.pack(std::string("secure"));
+        packer.pack(request.isSecure());
 
-        vector_map_t query;
-        string_map_t headers, cookies;
+        packer.pack(std::string("host"));
+        packer.pack(request.getHost());
+        
+        packer.pack(std::string("method"));
+        packer.pack(request.getRequestMethod());
 
-        std::string body;
-        std::string content_type;
-        std::streamsize content_length;
+        packer.pack(std::string("query"));
+        packer.pack_map(request.countArgs());
 
-        MSGPACK_DEFINE(
-            secure, method, host, 
-            query, headers, cookies, 
-            body, content_type, content_length
-        );
-    };
+        string_vector_t argument_names,
+                        argument_values;
+
+        request.argNames(argument_names);
+
+        for(string_vector_t::const_iterator it = argument_names.begin();
+            it != argument_names.end();
+            ++it)
+        {
+            request.getArg(*it, argument_values);
+
+            packer.pack(*it);
+            packer.pack(argument_values);
+        }
+
+        packer.pack(std::string("headers"));
+        packer.pack_map(request.countHeaders());
+
+        string_vector_t header_names;
+
+        request.headerNames(header_names);
+        
+        for(string_vector_t::const_iterator it = header_names.begin();
+            it != header_names.end();
+            ++it)
+        {
+            packer.pack(*it);
+            packer.pack(request.getHeader(*it));
+        }
+
+        packer.pack(std::string("cookies"));
+        packer.pack_map(request.countCookie());
+
+        string_vector_t cookie_names;
+
+        request.cookieNames(cookie_names);
+        
+        for(string_vector_t::const_iterator it = cookie_names.begin();
+            it != cookie_names.end();
+            ++it)
+        {
+            packer.pack(*it);
+            packer.pack(request.getCookie(*it));
+        }
+
+        return packer;
+    }
 }
 
 void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::HandlerContext * context) {
 	(void)context;
 
-    data_container chunk;
     boost::shared_ptr<response> future;
     
+    message_path path(
+        make_path(request->getScriptName()));
+
     try {
         future = m_client->send_message(
-            request_wrapper_t(request),
-            make_path(request->getScriptName()),
-            message_policy()
-        );
+            *request,
+            path,
+            message_policy());
+    } catch(const error& e) {
+        log()->error(
+            "unable to send message for service: %s, handle: %s - %s",
+            path.service_name.c_str(),
+            path.handle_name.c_str(),
+            e.what());
+        throw fastcgi::HttpException(e.type());
+    }
 
+    try {
+        data_container chunk;
+        
         request->setStatus(200);
         request->setContentType("text/plain");
 
-        log()->debug("Fetching responses");
-        
         while(future->get(&chunk)) {
-            log()->info("Got a chunk of %zu bytes", chunk.size());
-            
             request->write(
                 static_cast<const char*>(chunk.data()),
-                chunk.size()
-            );
+                chunk.size());
         }
     } catch(const error& e) { 
-        log()->error("send failed: %s", e.what());
-        throw fastcgi::HttpException(400);
+        log()->error(
+            "unable to process message for service: %s, handle: %s - %s",
+            path.service_name.c_str(),
+            path.handle_name.c_str(),
+            e.what());
+        throw fastcgi::HttpException(e.type());
 	} catch(const fastcgi::HttpException &e) {
 		throw;
 	} catch(...) {
-        log()->error("unexpected exception");
 		throw fastcgi::HttpException(400);
     }
 }
 
 message_path fastcgi_module_t::make_path(const std::string& script_name) const {
+    typedef boost::tokenizer<
+        boost::char_separator<char>
+    > tokenizer_type;
+
     boost::char_separator<char> separator("/");
     tokenizer_type tokenizer(script_name, separator);
     

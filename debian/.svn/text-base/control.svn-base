@@ -1,0 +1,16 @@
+Source: fastcgi-ip-translate
+Priority: extra
+Maintainer: Leonid A. Movsesjan <lmovsesjan@yandex-team.ru>
+Build-Depends: debhelper (>= 5),
+ libfastcgi-daemon2-dev,
+ libgeobase3-dev
+Standards-Version: 3.7.2
+
+Package: fastcgi-ip-translate
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends},
+ fastcgi-daemon2,
+ fastcgi-daemon2-init,
+ libfastcgi2-syslog
+Description: FastCGI-daemon component for ip translating
+ Fastcgi-daemon module

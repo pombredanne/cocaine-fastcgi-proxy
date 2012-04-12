@@ -1,0 +1,18 @@
+fastcgi-ip-translate (1.0-3) unstable; urgency=low
+
+  * added ping handler
+
+ -- Leonid A. Movsesjan <lmovsesjan@yandex-team.ru>  Sat, 03 Dec 2011 23:42:11 +0400
+
+fastcgi-ip-translate (1.0-2) unstable; urgency=low
+
+  * fixed position of post arg
+
+ -- Leonid A. Movsesjan <lmovsesjan@yandex-team.ru>  Mon, 06 Jun 2011 19:49:04 +0400
+
+fastcgi-ip-translate (1.0-1) unstable; urgency=low
+
+  * Initial release
+
+ -- Leonid A. Movsesjan <lmovsesjan@yandex-team.ru>  Wed, 01 Jun 2011 20:36:52 +0400
+
