@@ -7,6 +7,6 @@ Standards-Version: 3.7.2
 Package: libfastcgi-cocaine-proxy
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, fastcgi-daemon2, fastcgi-daemon2-init,
- libfastcgi2-syslog, libcocaine-dealer
+ libfastcgi2-syslog, libcocaine-dealer, libfcgi0ldbl (>= 2.4.0-8yandex)
 Description: Cocaine Dealer FastCGI component
  FastCGI Daemon component for Cocaine Dealer.

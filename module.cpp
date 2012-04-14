@@ -43,24 +43,17 @@ namespace msgpack {
             std::string
         > string_vector_t;
 
-        if(request.getRequestMethod() == "POST") {
-            packer.pack_map(9);
+        string_vector_t header_names,
+                        cookie_names;
 
-            std::string body;
-           
-            request.requestBody().toString(body);
-            
-            packer.pack(std::string("body"));
-            packer.pack(body);
+        packer.pack_map(2);
 
-            packer.pack(std::string("content-type"));
-            packer.pack(request.getContentType());
+        // Metadata
+        // --------
 
-            packer.pack(std::string("content-length"));
-            packer.pack(request.getContentLength());
-        } else {
-            packer.pack_map(6);
-        }
+        packer.pack(std::string("meta"));
+        
+        packer.pack_map(5);
 
         packer.pack(std::string("secure"));
         packer.pack(request.isSecure());
@@ -71,28 +64,8 @@ namespace msgpack {
         packer.pack(std::string("method"));
         packer.pack(request.getRequestMethod());
 
-        packer.pack(std::string("query"));
-        packer.pack_map(request.countArgs());
-
-        string_vector_t argument_names,
-                        argument_values;
-
-        request.argNames(argument_names);
-
-        for(string_vector_t::const_iterator it = argument_names.begin();
-            it != argument_names.end();
-            ++it)
-        {
-            request.getArg(*it, argument_values);
-
-            packer.pack(*it);
-            packer.pack(argument_values);
-        }
-
         packer.pack(std::string("headers"));
         packer.pack_map(request.countHeaders());
-
-        string_vector_t header_names;
 
         request.headerNames(header_names);
         
@@ -107,8 +80,6 @@ namespace msgpack {
         packer.pack(std::string("cookies"));
         packer.pack_map(request.countCookie());
 
-        string_vector_t cookie_names;
-
         request.cookieNames(cookie_names);
         
         for(string_vector_t::const_iterator it = cookie_names.begin();
@@ -117,6 +88,43 @@ namespace msgpack {
         {
             packer.pack(*it);
             packer.pack(request.getCookie(*it));
+        }
+
+        // Request
+        // -------
+        
+        packer.pack(std::string("request"));
+        
+        if(request.getRequestMethod() == "GET") {
+            string_vector_t argument_names,
+                            argument_values;
+
+            packer.pack_map(request.countArgs());
+
+            request.argNames(argument_names);
+
+            for(string_vector_t::const_iterator it = argument_names.begin();
+                it != argument_names.end();
+                ++it)
+            {
+                request.getArg(*it, argument_values);
+
+                packer.pack(*it);
+
+                if(argument_values.size() == 1) {
+                    packer.pack(argument_values[0]);
+                } else {
+                    packer.pack(argument_values);
+                }
+            }
+        } else if(request.getRequestMethod() == "POST") {
+            std::string body;
+            
+            request.requestBody().toString(body);
+            
+            packer.pack(body);
+        } else {
+            throw fastcgi::HttpException(400);
         }
 
         return packer;
