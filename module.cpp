@@ -137,26 +137,32 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
     boost::shared_ptr<response> future;
     
     message_path path(
-        make_path(request->getScriptName()));
+        make_path(request->getScriptName())
+    );
 
     try {
         future = m_client->send_message(
             *request,
             path,
-            message_policy());
+            message_policy()
+        );
     } catch(const dealer_error& e) {
         log()->error(
             "unable to send message for service: %s, handle: %s - %s",
             path.service_name.c_str(),
             path.handle_name.c_str(),
-            e.what());
+            e.what()
+        );
+        
         throw fastcgi::HttpException(e.code());
     } catch(const internal_error& e) {
         log()->error(
             "unable to send message for service: %s, handle: %s - %s",
             path.service_name.c_str(),
             path.handle_name.c_str(),
-            e.what());
+            e.what()
+        );
+        
         throw fastcgi::HttpException(400);
     }
 
@@ -169,21 +175,26 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
         while(future->get(&chunk)) {
             request->write(
                 static_cast<const char*>(chunk.data()),
-                chunk.size());
+                chunk.size()
+            );
         }
     } catch(const dealer_error& e) { 
         log()->error(
             "unable to process message for service: %s, handle: %s - %s",
             path.service_name.c_str(),
             path.handle_name.c_str(),
-            e.what());
+            e.what()
+        );
+        
         throw fastcgi::HttpException(e.code());
     } catch(const internal_error& e) {
         log()->error(
             "unable to send message for service: %s, handle: %s - %s",
             path.service_name.c_str(),
             path.handle_name.c_str(),
-            e.what());
+            e.what()
+        );
+        
         throw fastcgi::HttpException(400);
 	} catch(const fastcgi::HttpException &e) {
 		throw;
@@ -203,7 +214,8 @@ message_path fastcgi_module_t::make_path(const std::string& script_name) const {
     std::copy(
         tokenizer.begin(),
         tokenizer.end(),
-        std::back_inserter(tokens));
+        std::back_inserter(tokens)
+    );
 
     if(tokens.size() != 2) {
         log()->error(
