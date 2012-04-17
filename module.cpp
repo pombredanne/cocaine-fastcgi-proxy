@@ -144,13 +144,20 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
             *request,
             path,
             message_policy());
-    } catch(const error& e) {
+    } catch(const dealer_error& e) {
         log()->error(
             "unable to send message for service: %s, handle: %s - %s",
             path.service_name.c_str(),
             path.handle_name.c_str(),
             e.what());
-        throw fastcgi::HttpException(e.type());
+        throw fastcgi::HttpException(e.code());
+    } catch(const internal_error& e) {
+        log()->error(
+            "unable to send message for service: %s, handle: %s - %s",
+            path.service_name.c_str(),
+            path.handle_name.c_str(),
+            e.what());
+        throw fastcgi::HttpException(400);
     }
 
     try {
@@ -164,17 +171,22 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
                 static_cast<const char*>(chunk.data()),
                 chunk.size());
         }
-    } catch(const error& e) { 
+    } catch(const dealer_error& e) { 
         log()->error(
             "unable to process message for service: %s, handle: %s - %s",
             path.service_name.c_str(),
             path.handle_name.c_str(),
             e.what());
-        throw fastcgi::HttpException(e.type());
+        throw fastcgi::HttpException(e.code());
+    } catch(const internal_error& e) {
+        log()->error(
+            "unable to send message for service: %s, handle: %s - %s",
+            path.service_name.c_str(),
+            path.handle_name.c_str(),
+            e.what());
+        throw fastcgi::HttpException(400);
 	} catch(const fastcgi::HttpException &e) {
 		throw;
-	} catch(...) {
-		throw fastcgi::HttpException(400);
     }
 }
 
@@ -191,8 +203,7 @@ message_path fastcgi_module_t::make_path(const std::string& script_name) const {
     std::copy(
         tokenizer.begin(),
         tokenizer.end(),
-        std::back_inserter(tokens)
-    );
+        std::back_inserter(tokens));
 
     if(tokens.size() != 2) {
         log()->error(
