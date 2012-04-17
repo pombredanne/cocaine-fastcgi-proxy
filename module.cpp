@@ -134,7 +134,7 @@ namespace msgpack {
 void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::HandlerContext * context) {
 	(void)context;
 
-    std::string name;
+    std::string name(request->getScriptName());
     
     if(name.compare(0, sizeof("/ping") - 1, "/ping") == 0) {
         request->setStatus(200);
