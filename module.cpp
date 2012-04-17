@@ -150,14 +150,26 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
         future = m_client->send_message(
             *request,
             path,
-            message_policy());
-    } catch(const error& e) {
+            message_policy()
+        );
+    } catch(const dealer_error& e) {
         log()->error(
             "unable to send message for service: %s, handle: %s - %s",
             path.service_name.c_str(),
             path.handle_name.c_str(),
-            e.what());
-        throw fastcgi::HttpException(e.type());
+            e.what()
+        );
+        
+        throw fastcgi::HttpException(e.code());
+    } catch(const internal_error& e) {
+        log()->error(
+            "unable to send message for service: %s, handle: %s - %s",
+            path.service_name.c_str(),
+            path.handle_name.c_str(),
+            e.what()
+        );
+        
+        throw fastcgi::HttpException(400);
     }
 
     try {
@@ -169,19 +181,29 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
         while(future->get(&chunk)) {
             request->write(
                 static_cast<const char*>(chunk.data()),
-                chunk.size());
+                chunk.size()
+            );
         }
-    } catch(const error& e) { 
+    } catch(const dealer_error& e) { 
         log()->error(
             "unable to process message for service: %s, handle: %s - %s",
             path.service_name.c_str(),
             path.handle_name.c_str(),
-            e.what());
-        throw fastcgi::HttpException(e.type());
+            e.what()
+        );
+        
+        throw fastcgi::HttpException(e.code());
+    } catch(const internal_error& e) {
+        log()->error(
+            "unable to send message for service: %s, handle: %s - %s",
+            path.service_name.c_str(),
+            path.handle_name.c_str(),
+            e.what()
+        );
+        
+        throw fastcgi::HttpException(400);
 	} catch(const fastcgi::HttpException &e) {
 		throw;
-	} catch(...) {
-		throw fastcgi::HttpException(400);
     }
 }
 
