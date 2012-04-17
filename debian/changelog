@@ -1,6 +1,12 @@
+libfastcgi-cocaine-proxy (0.1-b2) lucid; urgency=low
+
+  * Beta 2.
+
+ -- Andrey Sibiryov <kobolog@yandex-team.ru>  Tue, 17 Apr 2012 15:24:40 +0400
+
 libfastcgi-cocaine-proxy (0.1-b1) lucid; urgency=low
 
-  * New release!
+  * Beta 1.
 
  -- Andrey Sibiryov <kobolog@yandex-team.ru>  Fri, 13 Apr 2012 19:32:01 +0400
 
