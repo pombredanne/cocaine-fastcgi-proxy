@@ -134,10 +134,17 @@ namespace msgpack {
 void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::HandlerContext * context) {
 	(void)context;
 
-    boost::shared_ptr<response> future;
+    std::string name;
     
-    message_path path(
-        make_path(request->getScriptName()));
+    if(name.compare(0, sizeof("/ping") - 1, "/ping") == 0) {
+        request->setStatus(200);
+        request->setContentType("text/plain");
+        request->write("ok", sizeof("ok") - 1);
+        return;
+    }
+
+    boost::shared_ptr<response> future;
+    message_path path(make_path(name));
 
     try {
         future = m_client->send_message(
