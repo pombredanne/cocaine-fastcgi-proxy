@@ -95,7 +95,7 @@ namespace msgpack {
         
         packer.pack(std::string("request"));
         
-        if(request.getRequestMethod() == "GET") {
+        if(request.getRequestMethod() == "GET" || request.getRequestMethod() == "HEAD") {
             string_vector_t argument_names,
                             argument_values;
 
@@ -172,6 +172,12 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
         throw fastcgi::HttpException(400);
     }
 
+    request->setStatus(200);
+    
+    if(request->getRequestMethod() == "HEAD") {
+        return;
+    }
+        
     try {
         data_container chunk;
         
@@ -202,8 +208,8 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
         );
         
         throw fastcgi::HttpException(400);
-	} catch(const fastcgi::HttpException &e) {
-		throw;
+    } catch(const fastcgi::HttpException &e) {
+        throw;
     }
 }
 

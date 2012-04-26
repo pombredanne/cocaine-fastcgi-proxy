@@ -1,3 +1,9 @@
+libfastcgi-cocaine-proxy (0.7.4-1) lucid; urgency=low
+
+  * Support for the HEAD method.
+
+ -- Andrey Sibiryov <kobolog@yandex-team.ru>  Thu, 26 Apr 2012 16:13:34 +0400
+
 libfastcgi-cocaine-proxy (0.7.4-0) lucid; urgency=low
 
   * Proper versioning scheme.
