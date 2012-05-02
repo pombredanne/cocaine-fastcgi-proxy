@@ -44,7 +44,10 @@ namespace msgpack {
         > string_vector_t;
 
         string_vector_t header_names,
-                        cookie_names;
+                        cookie_names,
+                        argument_names,
+                        argument_values,
+                        file_names;
 
         packer.pack_map(2);
 
@@ -53,10 +56,13 @@ namespace msgpack {
 
         packer.pack(std::string("meta"));
         
-        packer.pack_map(5);
+        packer.pack_map(6);
 
         packer.pack(std::string("secure"));
         packer.pack(request.isSecure());
+
+        packer.pack(std::string("url"));
+        packer.pack(request.getUrl());
 
         packer.pack(std::string("host"));
         packer.pack(request.getHost());
@@ -90,43 +96,57 @@ namespace msgpack {
             packer.pack(request.getCookie(*it));
         }
 
-        // Request
-        // -------
+        // Query arguments
+        // ---------------
         
         packer.pack(std::string("request"));
         
-        if(request.getRequestMethod() == "GET" || request.getRequestMethod() == "HEAD") {
-            string_vector_t argument_names,
-                            argument_values;
+        request.remoteFiles(file_names);
+        
+        packer.pack_map(request.countArgs() + file_names.size());
 
-            packer.pack_map(request.countArgs());
+        request.argNames(argument_names);
 
-            request.argNames(argument_names);
+        for(string_vector_t::const_iterator it = argument_names.begin();
+            it != argument_names.end();
+            ++it)
+        {
+            request.getArg(*it, argument_values);
 
-            for(string_vector_t::const_iterator it = argument_names.begin();
-                it != argument_names.end();
-                ++it)
-            {
-                request.getArg(*it, argument_values);
+            packer.pack(*it);
 
-                packer.pack(*it);
-
-                if(argument_values.size() == 1) {
-                    packer.pack(argument_values[0]);
-                } else {
-                    packer.pack(argument_values);
-                }
+            if(argument_values.size() == 1) {
+                packer.pack(argument_values[0]);
+            } else {
+                packer.pack(argument_values);
             }
-        } else if(request.getRequestMethod() == "POST") {
-            std::string body;
-            
-            request.requestBody().toString(body);
-            
-            packer.pack(body);
-        } else {
-            throw fastcgi::HttpException(400);
         }
+       
+        // Uploads
+        // -------
 
+        std::string contents;
+        
+        for(string_vector_t::const_iterator it = file_names.begin();
+            it != file_names.end();
+            ++it)
+        {
+            packer.pack(*it);
+
+            packer.pack_map(3);
+
+            packer.pack(std::string("name"));
+            packer.pack(request.remoteFileName(*it));
+
+            packer.pack(std::string("type"));
+            packer.pack(request.remoteFileType(*it));
+            
+            request.remoteFile(*it).toString(contents); 
+            
+            packer.pack(std::string("contents"));
+            packer.pack(contents);
+        }
+        
         return packer;
     }
 }
@@ -147,23 +167,19 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
     message_path path(make_path(name));
 
     try {
-        future = m_client->send_message(
-            *request,
-            path,
-            message_policy()
-        );
+        future = m_client->send_message(*request, path, message_policy());
     } catch(const dealer_error& e) {
         log()->error(
-            "unable to send message for service: %s, handle: %s - %s",
+            "unable to send message to '%s/%s' - %s",
             path.service_name.c_str(),
             path.handle_name.c_str(),
             e.what()
         );
-        
+
         throw fastcgi::HttpException(e.code());
     } catch(const internal_error& e) {
         log()->error(
-            "unable to send message for service: %s, handle: %s - %s",
+            "unable to send message to '%s/%s' - %s",
             path.service_name.c_str(),
             path.handle_name.c_str(),
             e.what()
@@ -181,7 +197,7 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
     try {
         data_container chunk;
         
-        request->setStatus(200);
+        // XXX: Set the content type according to the response's meta.
         request->setContentType("text/plain");
 
         while(future->get(&chunk)) {
@@ -192,7 +208,7 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
         }
     } catch(const dealer_error& e) { 
         log()->error(
-            "unable to process message for service: %s, handle: %s - %s",
+            "unable to process message for '%s/%s' - %s",
             path.service_name.c_str(),
             path.handle_name.c_str(),
             e.what()
@@ -201,12 +217,12 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
         throw fastcgi::HttpException(e.code());
     } catch(const internal_error& e) {
         log()->error(
-            "unable to send message for service: %s, handle: %s - %s",
+            "unable to process message for '%s/%s' - %s",
             path.service_name.c_str(),
             path.handle_name.c_str(),
             e.what()
         );
-        
+
         throw fastcgi::HttpException(400);
     } catch(const fastcgi::HttpException &e) {
         throw;
