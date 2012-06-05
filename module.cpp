@@ -36,6 +36,13 @@ fastcgi_module_t::~fastcgi_module_t() {
     m_client.reset();
 }
 
+struct cocaine_response {
+	int code;
+	std::vector<std::pair<std::string, std::string> > headers;
+
+	MSGPACK_DEFINE(code, headers);
+};
+
 namespace msgpack {
     template<class Stream>
     inline packer<Stream>& operator << (packer<Stream>& packer, const fastcgi::Request& request) {
@@ -56,7 +63,7 @@ namespace msgpack {
 
         packer.pack(std::string("meta"));
         
-        packer.pack_map(6);
+        packer.pack_map(11);
 
         packer.pack(std::string("secure"));
         packer.pack(request.isSecure());
@@ -69,6 +76,21 @@ namespace msgpack {
         
         packer.pack(std::string("method"));
         packer.pack(request.getRequestMethod());
+
+        packer.pack(std::string("query_string"));
+        packer.pack(request.getQueryString());
+
+        packer.pack(std::string("remote_addr"));
+        packer.pack(request.getRemoteAddr());
+
+        packer.pack(std::string("server_addr"));
+        packer.pack(request.getServerAddr());
+
+        packer.pack(std::string("path_info"));
+        packer.pack(request.getPathInfo());
+
+        packer.pack(std::string("script_name"));
+        packer.pack(request.getScriptName());
 
         packer.pack(std::string("headers"));
         packer.pack_map(request.countHeaders());
@@ -199,6 +221,41 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
         
         // XXX: Set the content type according to the response's meta.
         request->setContentType("text/plain");
+
+	future->get(&chunk);
+	
+	try {
+            msgpack::unpacked unpacked;
+	    cocaine_response resp;
+
+            msgpack::unpack(&unpacked, static_cast<const char*>(chunk.data()), chunk.size());
+            //unpacked.get().convert(&resp);
+            msgpack::object obj = unpacked.get();
+
+            msgpack::object_kv* p = obj.via.map.ptr;
+            msgpack::object_kv* const pend = obj.via.map.ptr + obj.via.map.size;
+            for(; p < pend; ++p) {
+                std::string key;
+                p->key.convert(&key);
+                if (!key.compare("code")) {
+                    p->val.convert(&(resp.code));
+                }
+                if (!key.compare("headers")) {
+                    p->val.convert(&(resp.headers));
+                }
+            }
+
+            request->setStatus(resp.code);
+
+            for (std::vector<std::pair<std::string, std::string> >::iterator it = resp.headers.begin(); it != resp.headers.end(); it++) {
+                request->setHeader(it->first, it->second);
+            }
+
+
+	} catch (std::exception &e) {
+		std::string what = e.what();
+		request->write(what.c_str(), what.size());
+	}
 
         while(future->get(&chunk)) {
             request->write(
