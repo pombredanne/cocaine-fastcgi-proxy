@@ -1,3 +1,9 @@
+libfastcgi-cocaine-proxy (0.7.4-4) lucid; urgency=low
+
+  * Added WSGI support
+
+ -- Anton Kortunov <toshic.toshic@gmail.com>  Tue, 05 Jun 2012 21:43:13 +0400
+
 libfastcgi-cocaine-proxy (0.7.4-3) lucid; urgency=low
 
   * Rebuilt for binary compatibility.
