@@ -1,7 +1,7 @@
 Source: libfastcgi-cocaine-proxy
 Priority: extra
 Maintainer: Andrey Sibiryov <kobolog@yandex-team.ru>
-Build-Depends: debhelper (>= 7), libfastcgi-daemon2-dev, libcocaine-dealer-dev
+Build-Depends: debhelper (>= 7), libfastcgi-daemon2-dev, libcocaine-dealer-dev, cdbs
 Standards-Version: 3.7.2
 
 Package: libfastcgi-cocaine-proxy
