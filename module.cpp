@@ -44,6 +44,25 @@ struct cocaine_response {
 };
 
 namespace msgpack {
+    inline cocaine_response& operator>> (object o, cocaine_response& v)
+    {
+        if(o.type != type::MAP) { throw type_error(); }
+
+	msgpack::object_kv* p = o.via.map.ptr;
+	msgpack::object_kv* const pend = o.via.map.ptr + o.via.map.size;
+	for(; p < pend; ++p) {
+	    std::string key;
+	    p->key.convert(&key);
+	    if (!key.compare("code")) {
+		p->val.convert(&(v.code));
+	    }
+	    if (!key.compare("headers")) {
+		p->val.convert(&(v.headers));
+	    }
+	}
+        return v;
+    }
+
     template<class Stream>
     inline packer<Stream>& operator << (packer<Stream>& packer, const fastcgi::Request& request) {
         typedef std::vector<
@@ -219,9 +238,7 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
     try {
         data_container chunk;
         
-        // XXX: Set the content type according to the response's meta.
-        request->setContentType("text/plain");
-
+	// Get the first chunk of data - it is meta
 	future->get(&chunk);
 	
 	try {
@@ -229,32 +246,25 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
 	    cocaine_response resp;
 
             msgpack::unpack(&unpacked, static_cast<const char*>(chunk.data()), chunk.size());
-            //unpacked.get().convert(&resp);
-            msgpack::object obj = unpacked.get();
-
-            msgpack::object_kv* p = obj.via.map.ptr;
-            msgpack::object_kv* const pend = obj.via.map.ptr + obj.via.map.size;
-            for(; p < pend; ++p) {
-                std::string key;
-                p->key.convert(&key);
-                if (!key.compare("code")) {
-                    p->val.convert(&(resp.code));
-                }
-                if (!key.compare("headers")) {
-                    p->val.convert(&(resp.headers));
-                }
-            }
+            unpacked.get().convert(&resp);
 
             request->setStatus(resp.code);
 
-            for (std::vector<std::pair<std::string, std::string> >::iterator it = resp.headers.begin(); it != resp.headers.end(); it++) {
+            for (std::vector<std::pair<std::string, std::string> >::iterator it = resp.headers.begin();
+                 it != resp.headers.end();
+                 it++)
+            {
                 request->setHeader(it->first, it->second);
             }
 
 
 	} catch (std::exception &e) {
-		std::string what = e.what();
-		request->write(what.c_str(), what.size());
+		log()->error(
+		    "unable to process message for '%s/%s' - %s",
+		    path.service_name.c_str(),
+		    path.handle_name.c_str(),
+		    e.what()
+		);
 	}
 
         while(future->get(&chunk)) {
