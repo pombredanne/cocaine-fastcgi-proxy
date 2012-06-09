@@ -166,8 +166,12 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
     boost::shared_ptr<response> future;
     message_path path(make_path(name));
 
+    message_policy mp;
+    mp.max_retries = -1;
+    mp.deadline = 0.3;
+
     try {
-        future = m_client->send_message(*request, path, message_policy());
+        future = m_client->send_message(*request, path, mp);
     } catch(const dealer_error& e) {
         log()->error(
             "unable to send message to '%s/%s' - %s",
