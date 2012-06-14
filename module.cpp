@@ -216,7 +216,7 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
     } catch(const dealer_error& e) {
         log()->error(
             "unable to send message to '%s/%s' - %s",
-            path.service_name.c_str(),
+            path.service_alias.c_str(),
             path.handle_name.c_str(),
             e.what()
         );
@@ -225,7 +225,7 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
     } catch(const internal_error& e) {
         log()->error(
             "unable to send message to '%s/%s' - %s",
-            path.service_name.c_str(),
+            path.service_alias.c_str(),
             path.handle_name.c_str(),
             e.what()
         );
@@ -265,7 +265,7 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
 	} catch (std::exception &e) {
 		log()->error(
 		    "unable to process message for '%s/%s' - %s",
-		    path.service_name.c_str(),
+		    path.service_alias.c_str(),
 		    path.handle_name.c_str(),
 		    e.what()
 		);
@@ -280,7 +280,7 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
     } catch(const dealer_error& e) { 
         log()->error(
             "unable to process message for '%s/%s' - %s",
-            path.service_name.c_str(),
+            path.service_alias.c_str(),
             path.handle_name.c_str(),
             e.what()
         );
@@ -289,7 +289,7 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
     } catch(const internal_error& e) {
         log()->error(
             "unable to process message for '%s/%s' - %s",
-            path.service_name.c_str(),
+            path.service_alias.c_str(),
             path.handle_name.c_str(),
             e.what()
         );
@@ -341,7 +341,7 @@ void fastcgi_module_t::onLoad() {
 	}
 
     std::string config_path(config->asString(path + "/client/configuration"));
-    m_client.reset(new client(config_path));
+    m_client.reset(new dealer_t(config_path));
 }
 
 void fastcgi_module_t::onUnload() {

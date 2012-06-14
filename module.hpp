@@ -22,7 +22,7 @@
 #include <fastcgi2/logger.h>
 #include <fastcgi2/request.h>
 
-#include <cocaine/dealer/client.hpp>
+#include <cocaine/dealer/dealer.hpp>
 
 namespace cocaine { namespace dealer {
 
@@ -48,7 +48,7 @@ public:
 
 private:
 	fastcgi::Logger * m_logger;
-    std::auto_ptr<client> m_client;
+    std::auto_ptr<dealer_t> m_client;
 };
 
 }}
