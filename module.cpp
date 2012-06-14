@@ -27,8 +27,8 @@
 using namespace cocaine::dealer;
 
 fastcgi_module_t::fastcgi_module_t(fastcgi::ComponentContext * context) :
-	fastcgi::Component(context),
-	m_logger(NULL),
+    fastcgi::Component(context),
+    m_logger(NULL),
     m_client(NULL)
 { }
 
@@ -36,30 +36,40 @@ fastcgi_module_t::~fastcgi_module_t() {
     m_client.reset();
 }
 
-struct cocaine_response {
-	int code;
-	std::vector<std::pair<std::string, std::string> > headers;
+struct cocaine_response_t {
+    int code;
 
-	MSGPACK_DEFINE(code, headers);
+    typedef std::vector<
+        std::pair<
+            std::string,
+            std::string
+        >
+    > header_vector_t;
+
+    header_vector_t headers;
 };
 
 namespace msgpack {
-    inline cocaine_response& operator>> (object o, cocaine_response& v)
-    {
-        if(o.type != type::MAP) { throw type_error(); }
+    inline cocaine_response_t& operator>> (object o, cocaine_response_t& v) {
+        if(o.type != type::MAP) { 
+            throw type_error();
+        }
 
-	msgpack::object_kv* p = o.via.map.ptr;
-	msgpack::object_kv* const pend = o.via.map.ptr + o.via.map.size;
-	for(; p < pend; ++p) {
-	    std::string key;
-	    p->key.convert(&key);
-	    if (!key.compare("code")) {
-		p->val.convert(&(v.code));
-	    }
-	    if (!key.compare("headers")) {
-		p->val.convert(&(v.headers));
-	    }
-	}
+        msgpack::object_kv * p = o.via.map.ptr;
+        msgpack::object_kv * const pend = o.via.map.ptr + o.via.map.size;
+
+        for(; p < pend; ++p) {
+            std::string key;
+
+            p->key.convert(&key);
+
+            if(!key.compare("code")) {
+                p->val.convert(&(v.code));
+            } else if(!key.compare("headers")) {
+                p->val.convert(&(v.headers));
+            }
+        }
+
         return v;
     }
 
@@ -81,7 +91,7 @@ namespace msgpack {
         // --------
 
         packer.pack(std::string("meta"));
-        
+
         packer.pack_map(11);
 
         packer.pack(std::string("secure"));
@@ -92,7 +102,7 @@ namespace msgpack {
 
         packer.pack(std::string("host"));
         packer.pack(request.getHost());
-        
+
         packer.pack(std::string("method"));
         packer.pack(request.getRequestMethod());
 
@@ -115,7 +125,7 @@ namespace msgpack {
         packer.pack_map(request.countHeaders());
 
         request.headerNames(header_names);
-        
+
         for(string_vector_t::const_iterator it = header_names.begin();
             it != header_names.end();
             ++it)
@@ -128,7 +138,7 @@ namespace msgpack {
         packer.pack_map(request.countCookie());
 
         request.cookieNames(cookie_names);
-        
+
         for(string_vector_t::const_iterator it = cookie_names.begin();
             it != cookie_names.end();
             ++it)
@@ -139,11 +149,11 @@ namespace msgpack {
 
         // Query arguments
         // ---------------
-        
+
         packer.pack(std::string("request"));
-        
+
         request.remoteFiles(file_names);
-        
+
         packer.pack_map(request.countArgs() + file_names.size());
 
         request.argNames(argument_names);
@@ -162,12 +172,12 @@ namespace msgpack {
                 packer.pack(argument_values);
             }
         }
-       
+
         // Uploads
         // -------
 
         std::string contents;
-        
+
         for(string_vector_t::const_iterator it = file_names.begin();
             it != file_names.end();
             ++it)
@@ -181,22 +191,22 @@ namespace msgpack {
 
             packer.pack(std::string("type"));
             packer.pack(request.remoteFileType(*it));
-            
+
             request.remoteFile(*it).toString(contents); 
-            
+
             packer.pack(std::string("contents"));
             packer.pack(contents);
         }
-        
+
         return packer;
     }
 }
 
 void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::HandlerContext * context) {
-	(void)context;
+    (void)context;
 
     std::string name(request->getScriptFilename());
-    
+
     if(name.compare(0, sizeof("/ping") - 1, "/ping") == 0) {
         request->setStatus(200);
         request->setContentType("text/plain");
@@ -234,42 +244,47 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
     }
 
     request->setStatus(200);
-    
+
     if(request->getRequestMethod() == "HEAD") {
         return;
     }
-        
+
     try {
         data_container chunk;
-        
-	// Get the first chunk of data - it is meta
-	future->get(&chunk);
-	
-	try {
+
+        // Get the first chunk of data - it is meta
+        future->get(&chunk);
+
+        try {
             msgpack::unpacked unpacked;
-	    cocaine_response resp;
+            cocaine_response_t response;
 
-            msgpack::unpack(&unpacked, static_cast<const char*>(chunk.data()), chunk.size());
-            unpacked.get().convert(&resp);
+            msgpack::unpack(
+                &unpacked,
+                static_cast<const char*>(chunk.data()),
+                chunk.size()
+            );
 
-            request->setStatus(resp.code);
+            unpacked.get().convert(&response);
 
-            for (std::vector<std::pair<std::string, std::string> >::iterator it = resp.headers.begin();
-                 it != resp.headers.end();
-                 it++)
+            request->setStatus(response.code);
+
+            for(cocaine_response_t::header_vector_t::iterator it = response.headers.begin();
+                it != response.headers.end();
+                it++)
             {
                 request->setHeader(it->first, it->second);
             }
+        } catch (std::exception &e) {
+            log()->error(
+                "unable to process response for '%s/%s' - %s",
+                path.service_alias.c_str(),
+                path.handle_name.c_str(),
+                e.what()
+            );
 
-
-	} catch (std::exception &e) {
-		log()->error(
-		    "unable to process message for '%s/%s' - %s",
-		    path.service_alias.c_str(),
-		    path.handle_name.c_str(),
-		    e.what()
-		);
-	}
+            throw fastcgi::HttpException(503);
+        }
 
         while(future->get(&chunk)) {
             request->write(
@@ -329,16 +344,16 @@ message_path fastcgi_module_t::make_path(const std::string& script_name) const {
 }
 
 void fastcgi_module_t::onLoad() {
-	assert(NULL == m_logger);
+    assert(NULL == m_logger);
 
-	const fastcgi::Config * config = context()->getConfig();
-	std::string path(context()->getComponentXPath());
+    const fastcgi::Config * config = context()->getConfig();
+    std::string path(context()->getComponentXPath());
 
-	m_logger = context()->findComponent<fastcgi::Logger>(config->asString(path + "/logger"));
+    m_logger = context()->findComponent<fastcgi::Logger>(config->asString(path + "/logger"));
 
-	if(!m_logger) {
-		throw std::logic_error("can't find logger");
-	}
+    if(!m_logger) {
+        throw std::logic_error("can't find logger");
+    }
 
     std::string config_path(config->asString(path + "/client/configuration"));
     m_client.reset(new dealer_t(config_path));
