@@ -39,7 +39,7 @@ private:
 		return m_logger;
 	}
 
-    message_path make_path(const std::string& script_name) const;
+    message_path_t make_path(const std::string& script_name) const;
 
 public:
 	virtual void onLoad();

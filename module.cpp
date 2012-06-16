@@ -214,10 +214,10 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
         return;
     }
 
-    boost::shared_ptr<response> future;
-    message_path path(make_path(name));
+    boost::shared_ptr<response_t> future;
+    message_path_t path(make_path(name));
 
-    message_policy mp;
+    message_policy_t mp;
     mp.max_retries = -1;
     mp.deadline = 0.3;
 
@@ -315,7 +315,7 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
     }
 }
 
-message_path fastcgi_module_t::make_path(const std::string& script_name) const {
+message_path_t fastcgi_module_t::make_path(const std::string& script_name) const {
     typedef boost::tokenizer<
         boost::char_separator<char>
     > tokenizer_type;
@@ -340,7 +340,7 @@ message_path fastcgi_module_t::make_path(const std::string& script_name) const {
         throw fastcgi::HttpException(400);
     }
 
-    return message_path(tokens[0], tokens[1]);
+    return message_path_t(tokens[0], tokens[1]);
 }
 
 void fastcgi_module_t::onLoad() {
