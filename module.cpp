@@ -50,7 +50,7 @@ struct cocaine_response_t {
 };
 
 namespace msgpack {
-    inline cocaine_response_t& operator>> (object o, cocaine_response_t& v) {
+    inline cocaine_response_t& operator >> (object o, cocaine_response_t& v) {
         if(o.type != type::MAP) { 
             throw type_error();
         }
@@ -219,7 +219,7 @@ void fastcgi_module_t::handleRequest(fastcgi::Request * request, fastcgi::Handle
 
     message_policy_t mp;
     mp.max_retries = -1;
-    mp.deadline = 0.3;
+    mp.deadline = 1.0;
 
     try {
         future = m_client->send_message(*request, path, mp);
