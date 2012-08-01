@@ -319,10 +319,10 @@ fastcgi_module_t::handleRequest(fastcgi::Request* request,
     }
 
     try {
-        data_container chunk;
+        chunk_data chunk;
 
         // Get the first chunk of data - it is meta
-        future->get(&chunk);
+        future->get(chunk);
 
         try {
             msgpack::unpacked unpacked;
@@ -354,7 +354,7 @@ fastcgi_module_t::handleRequest(fastcgi::Request* request,
             throw fastcgi::HttpException(503);
         }
 
-        while (future->get(&chunk)) {
+        while (future->get(chunk)) {
             request->write(
                 static_cast<const char*>(chunk.data()),
                 chunk.size()
