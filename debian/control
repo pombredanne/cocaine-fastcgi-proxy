@@ -7,6 +7,8 @@ Build-Depends:
  libcocaine-dealer-dev (>= 0.9),
  cdbs
 Standards-Version: 3.7.2
+Vcs-Git: git://github.com/cocaine/cocaine-fastcgi-proxy.git
+Vcs-Browser: https://github.com/cocaine/cocaine-fastcgi-proxy
 
 Package: libfastcgi-cocaine-proxy1
 Architecture: any
