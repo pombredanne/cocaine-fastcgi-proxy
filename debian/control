@@ -1,0 +1,25 @@
+Source: cocaine-fastcgi-proxy
+Priority: extra
+Maintainer: Rim R. Zaidullin <rimz@yandex-team.ru>
+Build-Depends:
+ debhelper (>= 7),
+ libfastcgi-daemon2-dev,
+ libcocaine-dealer-dev (>= 0.9),
+ cdbs
+Standards-Version: 3.7.2
+
+Package: libfastcgi-cocaine-proxy1
+Architecture: any
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ fastcgi-daemon2,
+ fastcgi-daemon2-init,
+ libfastcgi2-syslog,
+ libcocaine-dealer1 (>= 0.9),
+ libfcgi0ldbl (>= 2.4.0-8yandex)
+Provides: libfastcgi-cocaine-proxy
+Replaces: libfastcgi-cocaine-proxy
+Conflicts: libfastcgi-cocaine-proxy
+Description: Cocaine Dealer FastCGI component
+ FastCGI Daemon component for Cocaine Dealer.
