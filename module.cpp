@@ -262,9 +262,37 @@ fastcgi_module_t::update_policy_from_headers(message_policy_t& policy,
                                              fastcgi::Request& request)
 {
     header_value(policy.urgent, "dealer_policy_urgent", request);
+    header_value(policy.persistent, "dealer_policy_persistent", request);
     header_value(policy.timeout, "dealer_policy_timeout", request);
+    header_value(policy.ack_timeout, "dealer_policy_ack_timeout", request);
     header_value(policy.deadline, "dealer_policy_deadline", request);
     header_value(policy.max_retries, "dealer_policy_max_retries", request);
+}
+
+void
+fastcgi_module_t::update_policy_from_config(message_policy_t& policy)
+{
+    std::set<std::string, bool>::iterator it = m_available_policy_params.begin();
+    for (; it != m_available_policy_params.end(); ++it) {
+        if (*it == "urgent") {
+            policy.urgent = m_config_policy.urgent;
+        }
+        else if (*it == "persistent") {
+            policy.persistent = m_config_policy.persistent;
+        }
+        else if (*it == "timeout") {
+            policy.timeout = m_config_policy.timeout;
+        }
+        else if (*it == "ack_timeout") {
+            policy.ack_timeout = m_config_policy.ack_timeout;
+        }
+        else if (*it == "deadline") {
+            policy.deadline = m_config_policy.deadline;
+        }
+        else if (*it == "max_retries") {
+            policy.max_retries = m_config_policy.max_retries;
+        }
+    }
 }
 
 void
@@ -285,11 +313,12 @@ fastcgi_module_t::handleRequest(fastcgi::Request* request,
     boost::shared_ptr<response_t> future;
     message_path_t path(make_path(name));
 
-    message_policy_t mp = m_default_policy;
-    update_policy_from_headers(mp, *request);
-
     try {
-        future = m_dealer->send_message(*request, path, mp);
+        message_policy_t policy = m_dealer->policy_for_service(path.service_alias);
+        update_policy_from_config(policy);
+        update_policy_from_headers(policy, *request);
+
+        future = m_dealer->send_message(*request, path, policy);
     }
     catch (const dealer_error& e) {
         log()->error(
@@ -429,14 +458,32 @@ fastcgi_module_t::onLoad() {
     }
 
     std::string config_path;
+    m_available_policy_params.clear();
 
-    m_default_policy.max_retries = -1;
-    m_default_policy.deadline = 1.0;
+    if (get_config_param(m_config_policy.urgent, "/client/message_policy/urgent")) {
+        m_available_policy_params.insert("urgent");
+    }
 
-    get_config_param(m_default_policy.urgent, "/client/message_policy/urgent");
-    get_config_param(m_default_policy.timeout, "/client/message_policy/timeout");
-    get_config_param(m_default_policy.deadline, "/client/message_policy/deadline");
-    get_config_param(m_default_policy.max_retries, "/client/message_policy/max_retries");
+    if (get_config_param(m_config_policy.persistent, "/client/message_policy/persistent")) {
+        m_available_policy_params.insert("persistent");
+    }
+
+    if (get_config_param(m_config_policy.timeout, "/client/message_policy/timeout")) {
+        m_available_policy_params.insert("timeout");
+    }
+
+    if (get_config_param(m_config_policy.ack_timeout, "/client/message_policy/ack_timeout")) {
+        m_available_policy_params.insert("ack_timeout");
+    }
+
+    if (get_config_param(m_config_policy.deadline, "/client/message_policy/deadline")) {
+        m_available_policy_params.insert("deadline");
+    }
+
+    if (get_config_param(m_config_policy.max_retries, "/client/message_policy/max_retries")) {
+        m_available_policy_params.insert("max_retries");
+    }
+
     get_config_param(config_path, "/client/configuration");
 
     m_dealer.reset(new dealer_t(config_path));

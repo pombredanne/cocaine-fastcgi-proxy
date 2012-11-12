@@ -1,3 +1,9 @@
+cocaine-fastcgi-proxy (0.9.5) lucid; urgency=low
+
+  * Fixed configuring message policy from configs as well as policy behaviour
+
+ -- Rim Zaidullin <rimz@yandex-team.ru>  Mon, 12 Nov 2012 14:22:39 +0400
+
 cocaine-fastcgi-proxy (0.9.4) lucid; urgency=low
 
   * Debianization is back.

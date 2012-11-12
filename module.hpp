@@ -52,6 +52,7 @@ private:
 
     message_path_t make_path(const std::string& script_name) const;
 
+	void update_policy_from_config(message_policy_t& policy);
     void update_policy_from_headers(message_policy_t& policy,
                                     fastcgi::Request& request);
 
@@ -119,9 +120,10 @@ public:
 							   fastcgi::HandlerContext* context);
 
 private:
-	fastcgi::Logger*		m_logger;
-    std::auto_ptr<dealer_t>	m_dealer;
-    message_policy_t		m_default_policy;
+	fastcgi::Logger*			m_logger;
+    std::auto_ptr<dealer_t>		m_dealer;
+    std::set<std::string>		m_available_policy_params;
+    message_policy_t			m_config_policy;
 };
 
 } // namespace dealer
