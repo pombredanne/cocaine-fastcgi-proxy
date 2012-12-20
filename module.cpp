@@ -264,7 +264,7 @@ fastcgi_module_t::update_policy_from_headers(message_policy_t& policy,
     header_value(policy.urgent, "dealer_policy_urgent", request);
     header_value(policy.persistent, "dealer_policy_persistent", request);
     header_value(policy.timeout, "dealer_policy_timeout", request);
-    header_value(policy.ack_timeout, "dealer_policy_ack_timeout", request);
+    //header_value(policy.ack_timeout, "dealer_policy_ack_timeout", request);
     header_value(policy.deadline, "dealer_policy_deadline", request);
     header_value(policy.max_retries, "dealer_policy_max_retries", request);
 }
@@ -284,7 +284,7 @@ fastcgi_module_t::update_policy_from_config(message_policy_t& policy)
             policy.timeout = m_config_policy.timeout;
         }
         else if (*it == "ack_timeout") {
-            policy.ack_timeout = m_config_policy.ack_timeout;
+            //policy.ack_timeout = m_config_policy.ack_timeout;
         }
         else if (*it == "deadline") {
             policy.deadline = m_config_policy.deadline;
@@ -473,7 +473,7 @@ fastcgi_module_t::onLoad() {
     }
 
     if (get_config_param(m_config_policy.ack_timeout, "/client/message_policy/ack_timeout")) {
-        m_available_policy_params.insert("ack_timeout");
+        //m_available_policy_params.insert("ack_timeout");
     }
 
     if (get_config_param(m_config_policy.deadline, "/client/message_policy/deadline")) {
