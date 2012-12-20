@@ -1,3 +1,9 @@
+cocaine-fastcgi-proxy (0.9.8) lucid; urgency=low
+
+  * compat with libcocaine-dealer1 v0.9.4
+
+ -- Rim Zaidullin <rimz@yandex-team.ru>  Thu, 20 Dec 2012 19:33:45 +0400
+
 cocaine-fastcgi-proxy (0.9.7) lucid; urgency=low
 
   * Version increment
