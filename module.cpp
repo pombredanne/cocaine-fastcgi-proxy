@@ -472,9 +472,9 @@ fastcgi_module_t::onLoad() {
         m_available_policy_params.insert("timeout");
     }
 
-    if (get_config_param(m_config_policy.ack_timeout, "/client/message_policy/ack_timeout")) {
+    //if (get_config_param(m_config_policy.ack_timeout, "/client/message_policy/ack_timeout")) {
         //m_available_policy_params.insert("ack_timeout");
-    }
+    //}
 
     if (get_config_param(m_config_policy.deadline, "/client/message_policy/deadline")) {
         m_available_policy_params.insert("deadline");
