@@ -5,7 +5,8 @@ Build-Depends:
  debhelper (>= 7),
  libfastcgi-daemon2-dev,
  libcocaine-dealer-dev (>=0.9.8),
- cdbs
+ cdbs,
+ cmake
 Standards-Version: 3.7.2
 Vcs-Git: git://github.com/cocaine/cocaine-fastcgi-proxy.git
 Vcs-Browser: https://github.com/cocaine/cocaine-fastcgi-proxy
