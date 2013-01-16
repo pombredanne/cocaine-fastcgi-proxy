@@ -1,3 +1,9 @@
+cocaine-fastcgi-proxy (0.9.11) lucid; urgency=low
+
+  * convert cocaine error codes to http codes, add logging
+
+ -- Rim Zaidullin <rimz@yandex-team.ru>  Wed, 16 Jan 2012 21:09:20 +0400
+
 cocaine-fastcgi-proxy (0.9.10) lucid; urgency=low
 
   * version increment
