@@ -4,7 +4,8 @@ Maintainer: Rim R. Zaidullin <rimz@yandex-team.ru>
 Build-Depends:
  debhelper (>= 7),
  libfastcgi-daemon2-dev,
- libcocaine-dealer-dev (>=0.9.8),
+ libcocaine-dealer1 (<< 0.9.10000),
+ libcocaine-dealer-dev (<< 0.9.10000),
  cdbs,
  cmake,
  libmsgpack-dev
@@ -20,7 +21,8 @@ Depends:
  fastcgi-daemon2,
  fastcgi-daemon2-init,
  libfastcgi2-syslog,
- libcocaine-dealer1 (>=0.9.8),
+ libcocaine-dealer1 (<< 0.9.10000),
+ libcocaine-dealer-dev (<< 0.9.10000),
  libfcgi0ldbl (>= 2.4.0-8yandex)
 Provides: libfastcgi-cocaine-proxy
 Replaces: libfastcgi-cocaine-proxy
