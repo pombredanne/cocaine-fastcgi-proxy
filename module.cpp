@@ -19,6 +19,9 @@
 */
 
 #include <boost/tokenizer.hpp>
+#include <boost/foreach.hpp>
+#include <boost/regex.hpp>
+#include <boost/format.hpp>
 
 #include <fastcgi2/config.h>
 #include <fastcgi2/component_factory.h>
@@ -309,10 +312,14 @@ fastcgi_module_t::handleRequest(fastcgi::Request* request,
 		request->write("ok", sizeof("ok") - 1);
 		return;
 	}
+	
+	std::string path_str;
+	boost::optional<std::string> path_val = get_path_from_mapping(name);
+	path_str = path_val ? *path_val : name;
 
-	boost::shared_ptr<response_t> future;
-	message_path_t path(make_path(name));
-
+	boost::shared_ptr<response_t> future; 
+	message_path_t path(make_path(path_str));
+	
 	try {
 		message_policy_t policy = m_dealer->policy_for_service(path.service_alias);
 		update_policy_from_config(policy);
@@ -506,12 +513,37 @@ fastcgi_module_t::onLoad() {
 
 	get_config_param(config_path, "/client/configuration");
 
+	std::vector<std::string> mappings;
+	std::string mapping_path = path + "/mapping/path";
+	
+	config->subKeys(mapping_path, mappings);
+	BOOST_FOREACH(std::string& mapping_str, mappings) {
+		Mapping mapping;
+		
+		mapping.pattern = config->asString(mapping_str + "/@pattern");
+		mapping.app = config->asString(mapping_str + "/@app");
+		mapping.handle = config->asString(mapping_str + "/@handle");
+		
+		url_mappings_.push_back(mapping);
+	}
+	
 	m_dealer.reset(new dealer_t(config_path));
 }
 
 void
 fastcgi_module_t::onUnload() {
 	m_dealer.reset();
+}
+
+boost::optional<std::string> 
+fastcgi_module_t::get_path_from_mapping(const std::string& path) const {
+	BOOST_FOREACH(const Mapping& mapping, url_mappings_) {
+		bool result = boost::regex_match(path, mapping.pattern);
+		if (result) {
+			return boost::str(boost::format("%1%/%2%") % mapping.app % mapping.handle );
+		}
+	}
+	return false;
 }
 
 FCGIDAEMON_REGISTER_FACTORIES_BEGIN()
