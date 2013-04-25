@@ -23,9 +23,11 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/optional.hpp>
 
 #include <fastcgi2/component.h>
 #include <fastcgi2/handler.h>
@@ -46,6 +48,12 @@ public:
 	virtual ~fastcgi_module_t();
 
 private:
+	struct Mapping {
+		boost::regex pattern;
+		std::string app;
+		std::string handle;
+	};
+	
 	fastcgi::Logger* log() const {
 		return m_logger;
 	}
@@ -55,6 +63,8 @@ private:
 	void update_policy_from_config(message_policy_t& policy);
     void update_policy_from_headers(message_policy_t& policy,
                                     fastcgi::Request& request);
+	
+	boost::optional<std::string> get_path_from_mapping(const std::string& path) const;
 
 	bool get_config_param(bool& param,
 						  const std::string& path);
@@ -124,6 +134,7 @@ private:
     std::auto_ptr<dealer_t>		m_dealer;
     std::set<std::string>		m_available_policy_params;
     message_policy_t			m_config_policy;
+	std::vector<Mapping>        url_mappings_;
 };
 
 } // namespace dealer
