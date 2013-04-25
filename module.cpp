@@ -93,13 +93,11 @@ namespace msgpack {
 		string_vector_t header_names,
 						cookie_names,
 						argument_names,
-						argument_values,
-						file_names;
+						argument_values;
 
-		packer.pack_map(2);
+		packer.pack_map(3);
 
 		// Metadata
-		// --------
 
 		packer.pack(std::string("meta"));
 
@@ -140,6 +138,7 @@ namespace msgpack {
 		string_vector_t::const_iterator it;
 		
 		it = header_names.begin();
+
 		for (; it != header_names.end(); ++it) {
 			packer.pack(*it);
 			packer.pack(request.getHeader(*it));
@@ -151,23 +150,21 @@ namespace msgpack {
 		request.cookieNames(cookie_names);
 
 		it = cookie_names.begin();
+
 		for (; it != cookie_names.end(); ++it) {
 			packer.pack(*it);
 			packer.pack(request.getCookie(*it));
 		}
 
 		// Query arguments
-		// ---------------
 
 		packer.pack(std::string("request"));
-
-		request.remoteFiles(file_names);
-
-		packer.pack_map(request.countArgs() + file_names.size());
+		packer.pack_map(request.countArgs());
 
 		request.argNames(argument_names);
 
 		it = argument_names.begin();
+
 		for (; it != argument_names.end(); ++it) {
 			request.getArg(*it, argument_values);
 
@@ -181,28 +178,14 @@ namespace msgpack {
 			}
 		}
 
-		// Uploads
-		// -------
+		// Body
 
-		std::string contents;
+		std::string body;
 
-		it = file_names.begin();
-		for(; it != file_names.end(); ++it) {
-			packer.pack(*it);
+		request.requestBody().toString(body);
 
-			packer.pack_map(3);
-
-			packer.pack(std::string("name"));
-			packer.pack(request.remoteFileName(*it));
-
-			packer.pack(std::string("type"));
-			packer.pack(request.remoteFileType(*it));
-
-			request.remoteFile(*it).toString(contents); 
-
-			packer.pack(std::string("contents"));
-			packer.pack(contents);
-		}
+		packer.pack(std::string("body"));
+		packer.pack(body);
 
 		return packer;
 	}
