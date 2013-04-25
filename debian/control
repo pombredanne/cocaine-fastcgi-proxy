@@ -1,29 +1,16 @@
 Source: cocaine-fastcgi-proxy
 Priority: extra
 Maintainer: Rim R. Zaidullin <rimz@yandex-team.ru>
-Build-Depends:
- debhelper (>= 7),
- libfastcgi-daemon2-dev,
- libcocaine-dealer1 (<< 0.9.10000),
- libcocaine-dealer-dev (<< 0.9.10000),
- cdbs,
- cmake,
- libmsgpack-dev
+Build-Depends: cmake, cdbs, debhelper (>= 7), libfastcgi-daemon2-dev,
+ libcocaine-dealer-dev (>= 0.10.1), libmsgpack-dev
 Standards-Version: 3.7.2
 Vcs-Git: git://github.com/cocaine/cocaine-fastcgi-proxy.git
 Vcs-Browser: https://github.com/cocaine/cocaine-fastcgi-proxy
 
 Package: libfastcgi-cocaine-proxy1
 Architecture: any
-Depends:
- ${shlibs:Depends},
- ${misc:Depends},
- fastcgi-daemon2,
- fastcgi-daemon2-init,
- libfastcgi2-syslog,
- libcocaine-dealer1 (<< 0.9.10000),
- libcocaine-dealer-dev (<< 0.9.10000),
- libfcgi0ldbl (>= 2.4.0-8yandex)
+Depends: ${shlibs:Depends}, ${misc:Depends}, fastcgi-daemon2, fastcgi-daemon2-init,
+ libfastcgi2-syslog, libcocaine-dealer1 (>= 0.10.1), libfcgi0ldbl (>= 2.4.0-8yandex)
 Provides: libfastcgi-cocaine-proxy
 Replaces: libfastcgi-cocaine-proxy
 Conflicts: libfastcgi-cocaine-proxy

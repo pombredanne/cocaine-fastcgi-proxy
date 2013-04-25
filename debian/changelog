@@ -1,3 +1,9 @@
+cocaine-fastcgi-proxy (0.10.1) lucid; urgency=low
+
+  * Some kind of compatibility release for Cocaine 10.1.
+
+ -- Andrey Sibiryov <kobolog@yandex-team.ru>  Thu, 25 Apr 2013 23:41:56 +0400
+
 cocaine-fastcgi-proxy (0.9.12) lucid; urgency=low
 
   * New dealer compatibility.
