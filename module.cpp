@@ -159,9 +159,10 @@ namespace msgpack {
 		// Query arguments
 
 		packer.pack(std::string("request"));
-		packer.pack_map(request.countArgs());
 
 		request.argNames(argument_names);
+
+		packer.pack_map(argument_names.size());
 
 		it = argument_names.begin();
 
